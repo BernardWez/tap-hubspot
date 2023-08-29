@@ -127,18 +127,16 @@ class ContactsStream(HubspotStream):
     """Define custom stream."""
 
     name = "contacts"
-    path = "/crm/v3/objects/contacts"
+    path = "/crm/v3/objects/contacts/search"
     primary_keys = ["id"]
     partitions = [{"archived": True}, {"archived": False}]
 
-    def get_url_params(
+    def prepare_request_payload(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
-        params = super().get_url_params(context, next_page_token)
-        params["properties"] = ",".join(self.properties)
-        params["archived"] = context["archived"]
-        params["associations"] = ",".join(HUBSPOT_OBJECTS)
-        return params
+        data = super().prepare_request_payload(context, next_page_token)
+        data["properties"] = self.properties
+        return data
 
     @property
     def schema(self) -> dict:
