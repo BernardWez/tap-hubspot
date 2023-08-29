@@ -3,10 +3,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import backoff
-import pytz
 import requests
 from singer_sdk import typing as th
-from singer_sdk._singerlib.utils import strptime_to_utc
 from singer_sdk.authenticators import BearerTokenAuthenticator
 from singer_sdk.exceptions import RetriableAPIError
 from singer_sdk.helpers.jsonpath import extract_jsonpath
@@ -30,6 +28,7 @@ class HubspotStream(RESTStream):
     """Hubspot stream class."""
 
     url_base = "https://api.hubapi.com"
+    rest_method = "POST"
 
     records_jsonpath = "$.results[*]"  # Or override `parse_response`.
     next_page_token_jsonpath = (
@@ -77,24 +76,42 @@ class HubspotStream(RESTStream):
 
         return next_page_token
 
-    def get_url_params(
-        self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Dict[str, Any]:
-        """Return a dictionary of values to be used in URL parameterization."""
-        params: dict = {}
-        if next_page_token:
-            params["after"] = next_page_token
-        params["limit"] = 100
-        return params
-
     def prepare_request_payload(
-        self, context: Optional[dict], next_page_token: Optional[Any]
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any],
     ) -> Optional[dict]:
         """Prepare the data payload for the REST API request.
 
         By default, no payload will be sent (return None).
         """
-        return None
+        data: dict = {}
+        if next_page_token:
+            data["after"] = next_page_token
+
+        data["limit"] = 100
+
+        last_state = self.get_starting_replication_key_value(context)
+
+        data["filterGroups"] = [
+            {
+                "filters": [
+                    {
+                        "value": last_state,
+                        "propertyName": "lastmodifieddate", # NOTE: self.replication_key (i.e. `updatedAt`) doesn't work
+                        "operator": "GT",
+                    }
+                ]
+            }
+        ]
+
+        data["sorts"] = [
+            {
+                "propertyName": "lastmodifieddate",
+                "direction": "ASCENDING",
+            }
+        ]
+        return data
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""
