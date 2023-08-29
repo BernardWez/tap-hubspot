@@ -129,7 +129,6 @@ class ContactsStream(HubspotStream):
     name = "contacts"
     path = "/crm/v3/objects/contacts/search"
     primary_keys = ["id"]
-    partitions = [{"archived": True}, {"archived": False}]
 
     def prepare_request_payload(
         self, context: Optional[dict], next_page_token: Optional[Any]
