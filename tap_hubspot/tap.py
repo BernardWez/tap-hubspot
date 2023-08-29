@@ -50,38 +50,7 @@ from tap_hubspot.streams import (
 
 STREAM_TYPES = [
     ## CRM
-    AssociationsCompaniesToContactsStream,
-    AssociationsCompaniesToDealsStream,
-    AssociationsContactsToCompaniesStream,
-    AssociationsContactsToDealsStream,
-    AssociationsDealsToCompaniesStream,
-    AssociationsDealsToContactsStream,
     ContactsStream,
-    CompaniesStream,
-    DealsStream,
-    MeetingsStream,
-    CallsStream,
-    LineItemsStream,
-    QuotesStream,
-    PropertiesCompaniesStream,
-    PropertiesContactsStream,
-    PropertiesDealsStream,
-    PropertiesMeetingsStream,
-    OwnersStream,
-    ## Marketing
-    MarketingEmailsStream,
-    MarketingCampaignIdsStream,
-    MarketingCampaignsStream,
-    MarketingFormsStream,
-    MarketingListsStream,
-    MarketingListContactsStream,
-    # Events
-    WebAnalyticsContactsStream,
-    WebAnalyticsDealsStream,
-    ## Analytics
-    AnalyticsViewsStream,
-    ## Automation
-    WorkflowsStream,
 ]
 
 
