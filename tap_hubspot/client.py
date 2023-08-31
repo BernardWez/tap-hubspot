@@ -85,33 +85,7 @@ class HubspotStream(RESTStream):
 
         By default, no payload will be sent (return None).
         """
-        data: dict = {}
-        if next_page_token:
-            data["after"] = next_page_token
-
-        data["limit"] = 100
-
-        last_state = self.get_starting_replication_key_value(context)
-
-        data["filterGroups"] = [
-            {
-                "filters": [
-                    {
-                        "value": last_state,
-                        "propertyName": "lastmodifieddate", # NOTE: self.replication_key (i.e. `updatedAt`) doesn't work
-                        "operator": "GT",
-                    }
-                ]
-            }
-        ]
-
-        data["sorts"] = [
-            {
-                "propertyName": "lastmodifieddate",
-                "direction": "ASCENDING",
-            }
-        ]
-        return data
+        return None
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         """Parse the response and return an iterator of result rows."""

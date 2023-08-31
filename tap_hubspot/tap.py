@@ -43,14 +43,10 @@ from tap_hubspot.streams import (
 # from black import main
 
 
-
-
-
-
-
 STREAM_TYPES = [
     ## CRM
     ContactsStream,
+    CompaniesStream,
 ]
 
 

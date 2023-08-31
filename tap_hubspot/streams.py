@@ -52,6 +52,7 @@ class CallsStream(HubspotStream):
 
 class OwnersStream(HubspotStream):
     """Define custom stream."""
+
     name = "owners"
     path = "/crm/v3/owners"
     primary_keys = ["id"]
@@ -69,18 +70,46 @@ class CompaniesStream(HubspotStream):
     """Define custom stream."""
 
     name = "companies"
-    path = "/crm/v3/objects/companies"
+    path = "/crm/v3/objects/companies/search"
     primary_keys = ["id"]
-    partitions = [{"archived": True}, {"archived": False}]
 
-    def get_url_params(
-        self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Dict[str, Any]:
-        params = super().get_url_params(context, next_page_token)
-        params["properties"] = ",".join(self.properties)
-        params["archived"] = context["archived"]
-        params["associations"] = ",".join(HUBSPOT_OBJECTS)
-        return params
+    def prepare_request_payload(
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any],
+    ) -> Optional[dict]:
+        """Prepare the data payload for the REST API request.
+
+        By default, no payload will be sent (return None).
+        """
+        data: dict = {}
+        data["properties"] = self.properties
+        if next_page_token:
+            data["after"] = next_page_token
+
+        data["limit"] = 100
+
+        last_state = self.get_starting_replication_key_value(context)
+
+        data["filterGroups"] = [
+            {
+                "filters": [
+                    {
+                        "value": last_state,
+                        "propertyName": "hs_lastmodifieddate",  # NOTE: self.replication_key (i.e. `updatedAt`) doesn't work
+                        "operator": "GT",
+                    }
+                ]
+            }
+        ]
+
+        data["sorts"] = [
+            {
+                "propertyName": "hs_lastmodifieddate",
+                "direction": "ASCENDING",
+            }
+        ]
+        return data
 
     @property
     def schema(self) -> dict:
@@ -95,6 +124,7 @@ class CompaniesStream(HubspotStream):
 
 class DealsStream(HubspotStream):
     """Define custom stream."""
+
     name = "deals"
     path = "/crm/v3/objects/deals"
     primary_keys = ["id"]
@@ -131,10 +161,41 @@ class ContactsStream(HubspotStream):
     primary_keys = ["id"]
 
     def prepare_request_payload(
-        self, context: Optional[dict], next_page_token: Optional[Any]
-    ) -> Dict[str, Any]:
-        data = super().prepare_request_payload(context, next_page_token)
+        self,
+        context: Optional[dict],
+        next_page_token: Optional[Any],
+    ) -> Optional[dict]:
+        """Prepare the data payload for the REST API request.
+
+        By default, no payload will be sent (return None).
+        """
+        data: dict = {}
         data["properties"] = self.properties
+        if next_page_token:
+            data["after"] = next_page_token
+
+        data["limit"] = 100
+
+        last_state = self.get_starting_replication_key_value(context)
+
+        data["filterGroups"] = [
+            {
+                "filters": [
+                    {
+                        "value": last_state,
+                        "propertyName": "lastmodifieddate",  # NOTE: self.replication_key (i.e. `updatedAt`) doesn't work
+                        "operator": "GT",
+                    }
+                ]
+            }
+        ]
+
+        data["sorts"] = [
+            {
+                "propertyName": "lastmodifieddate",
+                "direction": "ASCENDING",
+            }
+        ]
         return data
 
     @property
@@ -391,6 +452,7 @@ class QuotesStream(HubspotStream):
         if self.cached_schema is None:
             self.cached_schema, self.properties = self.get_custom_schema()
         return self.cached_schema
+
 
 class LineItemsStream(HubspotStream):
     name = "line_items"
